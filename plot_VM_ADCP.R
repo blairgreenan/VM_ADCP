@@ -36,28 +36,78 @@ End_time <- 384.8 # 21 Jan 2012
 VPR_survey_time <- which(ADCP_xy$xyt[3,]>=Start_time & ADCP_xy$xyt[3,]<=End_time)
 
 # Extract the latitude, longitude, u and v that correspond to the survey time
+# Limited this to the upper 200m, so bins from approx 20-200m - this is the top 36 bins (5m bins)
 u_survey <- ADCP_u[1:36,VPR_survey_time]
 v_survey <- ADCP_v[1:36,VPR_survey_time]
 lon_survey <- ADCP_xy$xyt[1,VPR_survey_time]
 lat_survey <- ADCP_xy$xyt[2,VPR_survey_time]
+time_survey <- ADCP_xy$xyt[3,VPR_survey_time]
+# The time in the VM_ADCP data file is set by a base year (2011) and then fractional
+# days are added to this.  Need to adjust this some that it is a date/time value
+# that can be handled by R and Matlab (to run the Padman tidal model)
+DateTime_survey <- date_decimal(2012 + ((time_survey-366)/365))
+DateTime_survey = as.POSIXlt(DateTime_survey, tz = "UTC") #convert to UTC time zone
+DateTime_survey = as.numeric(DateTime_survey) / 86400 #convert to days
+DateTime_survey = DateTime_survey + 719529 #convert to MATLAB datenum
 
-# Compute the depth-average velocity components
+# write output to a .mat file
+writeMat("Survey_metadat.mat", lon_survey=lon_survey, lat_survey=lat_survey, DateTime_survey=DateTime_survey)
+
+###### Jump over to Matlab at this point and run the TMD (Tidal Model Driver v2.5, Padman et al, 2002)
+# Load the tidal model results
+tidal_model <- readMat("survey_tidal_model.mat")
+tidal_u <- (tidal_model$u.tide[,1:length(tidal_model$u.tide)])/100
+tidal_v <- (tidal_model$v.tide[,1:length(tidal_model$v.tide)])/100
+
+# Compute the depth-average ADCP velocity components
 u_mean <- colMeans(u_survey,na.rm=TRUE)
 v_mean <- colMeans(v_survey,na.rm=TRUE)
-
 # Compute the speed and direction
 mean_speed <- sqrt(u_mean^2 + v_mean^2)
 mean_direction <- atan2(v_mean,u_mean)
 
+# Compute the speed and direction from tidal model
+tide_speed <- sqrt(tidal_u^2 + tidal_v^2)
+tide_direction <- atan2(tidal_v,tidal_u)
+
+# Sub-tidal currents
+subtidal_u <- u_mean - tidal_u
+subtidal_v <- v_mean - tidal_v
+subtidal_speed <- sqrt(subtidal_u^2 + subtidal_v^2)
+subtidal_direction <- atan2(subtidal_v,subtidal_u)
+
+# create data frames
 ADCP_df <- data.frame(lon_survey,lat_survey,u_mean,v_mean, mean_speed, mean_direction)
+tide_df <- data.frame(lon_survey,lat_survey,tidal_u,tidal_v, tide_speed, tide_direction)
+subtidal_df <- data.frame(lon_survey,lat_survey,subtidal_u,subtidal_v, subtidal_speed, subtidal_direction)
 
 # plot the data
 # Note that the length of the arrows on the plot can be controlled by dividing the mean_speed below
-quiver_plot <- ggplot(ADCP_df, aes(x=lon_survey,y=lat_survey)) +
+ADCP_quiver_plot <- ggplot(ADCP_df, aes(x=lon_survey,y=lat_survey)) +
   geom_point() + 
   geom_spoke(angle=mean_direction,radius=mean_speed/3, show.legend = TRUE, na.rm = TRUE, arrow = arrow(length = unit(.05, 'inches'))) +
   xlab("Longitude") +
-  ylab("Latitude")
+  ylab("Latitude") +
+  ggtitle("VM_ADCP Depth Average 20-200m")
+
+# Note that the length of the arrows on the plot can be controlled by dividing the mean_speed below
+tide_quiver_plot <- ggplot(tide_df, aes(x=lon_survey,y=lat_survey)) +
+  geom_point() + 
+  geom_spoke(angle=tide_direction,radius=tide_speed/1, show.legend = TRUE, na.rm = TRUE, arrow = arrow(length = unit(.05, 'inches'))) +
+  xlab("Longitude") +
+  ylab("Latitude") +
+  ggtitle("Tidal Model")
+
+# Note that the length of the arrows on the plot can be controlled by dividing the mean_speed below
+subtidal_quiver_plot <- ggplot(subtidal_df, aes(x=lon_survey,y=lat_survey)) +
+  geom_point() + 
+  geom_spoke(angle=subtidal_direction,radius=subtidal_speed/1, show.legend = TRUE, na.rm = TRUE, arrow = arrow(length = unit(.05, 'inches'))) +
+  xlab("Longitude") +
+  ylab("Latitude") +
+  ggtitle("Subtidal Currents")
+
+
+# Need to look at the vertical shear estimates from the VM_ADCP
 
 
 
