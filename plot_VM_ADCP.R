@@ -45,7 +45,7 @@ time_survey <- ADCP_xy$xyt[3,VPR_survey_time]
 # The time in the VM_ADCP data file is set by a base year (2011) and then fractional
 # days are added to this.  Need to adjust this some that it is a date/time value
 # that can be handled by R and Matlab (to run the Padman tidal model)
-DateTime_survey <- date_decimal(2012 + ((time_survey-366)/365))
+DateTime_survey <- date_decimal(2012 + ((time_survey-366)/366))
 DateTime_survey = as.POSIXlt(DateTime_survey, tz = "UTC") #convert to UTC time zone
 DateTime_survey = as.numeric(DateTime_survey) / 86400 #convert to days
 DateTime_survey = DateTime_survey + 719529 #convert to MATLAB datenum
@@ -93,7 +93,7 @@ ADCP_quiver_plot <- ggplot(ADCP_df, aes(x=lon_survey,y=lat_survey)) +
 # Note that the length of the arrows on the plot can be controlled by dividing the mean_speed below
 tide_quiver_plot <- ggplot(tide_df, aes(x=lon_survey,y=lat_survey)) +
   geom_point() + 
-  geom_spoke(angle=tide_direction,radius=tide_speed/1, show.legend = TRUE, na.rm = TRUE, arrow = arrow(length = unit(.05, 'inches'))) +
+  geom_spoke(angle=tide_direction,radius=tide_speed/3, show.legend = TRUE, na.rm = TRUE, arrow = arrow(length = unit(.05, 'inches'))) +
   xlab("Longitude") +
   ylab("Latitude") +
   ggtitle("Tidal Model")
@@ -101,7 +101,7 @@ tide_quiver_plot <- ggplot(tide_df, aes(x=lon_survey,y=lat_survey)) +
 # Note that the length of the arrows on the plot can be controlled by dividing the mean_speed below
 subtidal_quiver_plot <- ggplot(subtidal_df, aes(x=lon_survey,y=lat_survey)) +
   geom_point() + 
-  geom_spoke(angle=subtidal_direction,radius=subtidal_speed/1, show.legend = TRUE, na.rm = TRUE, arrow = arrow(length = unit(.05, 'inches'))) +
+  geom_spoke(angle=subtidal_direction,radius=subtidal_speed/3, show.legend = TRUE, na.rm = TRUE, arrow = arrow(length = unit(.05, 'inches'))) +
   xlab("Longitude") +
   ylab("Latitude") +
   ggtitle("Subtidal Currents")
