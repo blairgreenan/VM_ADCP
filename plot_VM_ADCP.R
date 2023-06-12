@@ -45,7 +45,7 @@ time_survey <- ADCP_xy$xyt[3,VPR_survey_time]
 # The time in the VM_ADCP data file is set by a base year (2011) and then fractional
 # days are added to this.  Need to adjust this some that it is a date/time value
 # that can be handled by R and Matlab (to run the Padman tidal model)
-DateTime_survey <- date_decimal(2012 + ((time_survey-366)/366))
+DateTime_survey <- date_decimal(2012 + ((time_survey-366)/366))  # scratched my head quite a bit to figure out that this needs to be 366 not 365
 DateTime_survey = as.POSIXlt(DateTime_survey, tz = "UTC") #convert to UTC time zone
 DateTime_survey = as.numeric(DateTime_survey) / 86400 #convert to days
 DateTime_survey = DateTime_survey + 719529 #convert to MATLAB datenum
@@ -53,7 +53,47 @@ DateTime_survey = DateTime_survey + 719529 #convert to MATLAB datenum
 # write output to a .mat file
 writeMat("Survey_metadat.mat", lon_survey=lon_survey, lat_survey=lat_survey, DateTime_survey=DateTime_survey)
 
-###### Jump over to Matlab at this point and run the TMD (Tidal Model Driver v2.5, Padman et al, 2002)
+###### Start and instance of Matlab and run the TMD (Tidal Model Driver v2.5, Padman et al, 2002)
+
+# Use the R.matlab package functionality to execute the tidal model in Matlab
+# First copy the metadata file to the TMD directory
+file.copy("Survey_metadat.mat", "C:/Users/greenanb/Documents/Science Projects/Current/Ross Sea/Data/TMD_Matlab_Toolbox_v2_5/TMD/Survey_metadat.mat", overwrite = TRUE)
+# Start the instance of Matlab
+Matlab$startServer()
+# Create a MATLAB client object used to communicate with MATLAB
+matlab <- Matlab()
+# Check status of MATLAB connection (not yet connected)
+print(matlab)
+# If you experience any problems, ask for detailed outputs
+#     by uncommenting the next line
+setVerbose(matlab, -2)
+# Connect to the MATLAB server.
+isOpen <- open(matlab)
+# Confirm that the MATLAB server is open, and running
+if (!isOpen)
+  throw("MATLAB server is not running: waited 30 seconds.")
+# Check status of MATLAB connection (now connected)
+print(matlab)
+# Change the working directory of Matlab
+evaluate(matlab, "cd ('C:/Users/greenanb/Documents/Science Projects/Current/Ross Sea/Data/TMD_Matlab_Toolbox_v2_5/TMD')")
+# Load the metadata file in Matlab
+evaluate(matlab, "load Survey_metadat.mat")
+# Execuate the tidal model functions
+evaluate(matlab, "[u_tide,ConList]=tmd_tide_pred('./DATA/CATS2008/Model_CATS2008',DateTime_survey,lat_survey,lon_survey,'u');")
+evaluate(matlab, "[v_tide,ConList]=tmd_tide_pred('./DATA/CATS2008/Model_CATS2008',DateTime_survey,lat_survey,lon_survey,'v');")
+# Save the results to a .mat file
+evaluate(matlab, "save survey_tidal_model.mat DateTime_survey lat_survey lon_survey u_tide v_tide")
+# Close the MATLAB client, which will also shutdown
+# the MATLAB server and the connection to it.
+close(matlab)
+# Check status of MATLAB connection (now disconnected)
+print(matlab)
+
+########## Return to R and complete the analysis
+
+# Copy tidal model estimates back to the VM_ADCP directory
+file.copy("C:/Users/greenanb/Documents/Science Projects/Current/Ross Sea/Data/TMD_Matlab_Toolbox_v2_5/TMD/survey_tidal_model.mat", "C:/Users/greenanb/Documents/Science Projects/Current/Ross Sea/Documents/Papers/Ross Bank/Figures/VM_ADCP/survey_tidal_model.mat", overwrite = TRUE)
+
 # Load the tidal model results
 tidal_model <- readMat("survey_tidal_model.mat")
 tidal_u <- (tidal_model$u.tide[,1:length(tidal_model$u.tide)])/100
@@ -105,6 +145,13 @@ subtidal_quiver_plot <- ggplot(subtidal_df, aes(x=lon_survey,y=lat_survey)) +
   xlab("Longitude") +
   ylab("Latitude") +
   ggtitle("Subtidal Currents")
+
+
+# Plot the results
+# dev.new()
+# Use Patchwork package to create 3-panel plot
+# ADCP_quiver_plot + tide_quiver_plot + subtidal_quiver_plot
+# ggsave("VMADCP_tides.png", device = "png", width = 7, height = 3.5, units = "in", dpi = 1200, scale = 2)
 
 
 # Need to look at the vertical shear estimates from the VM_ADCP
