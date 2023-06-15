@@ -42,10 +42,15 @@ VPR_survey_time <- which(ADCP_xy$xyt[3,]>=Start_time & ADCP_xy$xyt[3,]<=End_time
 # u_survey <- ADCP_u[1:36,VPR_survey_time]
 # v_survey <- ADCP_v[1:36,VPR_survey_time]
 u_survey <- ADCP_u[,VPR_survey_time]
+u_survey[is.nan(u_survey)] <- NA
 v_survey <- ADCP_v[,VPR_survey_time]
+v_survey[is.nan(v_survey)] <- NA
 lon_survey <- ADCP_xy$xyt[1,VPR_survey_time]
+lon_survey[is.nan(lon_survey)] <- NA
 lat_survey <- ADCP_xy$xyt[2,VPR_survey_time]
+lat_survey[is.nan(lat_survey)] <- NA
 time_survey <- ADCP_xy$xyt[3,VPR_survey_time]
+time_survey[is.nan(time_survey)] <- NA
 # The time in the VM_ADCP data file is set by a base year (2011) and then fractional
 # days are added to this.  
 
@@ -68,6 +73,8 @@ shear <- sqrt(u_diff^2 + v_diff^2)/5  # dividing by the bin depth of 5 m
 shear_df <- data.frame(shear)
 # Convert the data frame to a tibble
 shear_tibble <- as_tibble(shear_df)
+# Add time as names of the columns
+names(shear_tibble) <- as.character(time_survey)
 # Use bind_cols to add a depth vector to the first column of the tibble
 shear_tibble_with_depth <- bind_cols(z,shear_tibble)
 # Add a name to the depth column
@@ -76,6 +83,28 @@ names(shear_tibble_with_depth)[1] <- "Depth"
 pivot_shear <- pivot_longer(shear_tibble_with_depth, cols = 2:303, names_to = "Time", values_to = "Shear")
 # Convert time from a string to number 
 pivot_shear$Time <- as.numeric(pivot_shear$Time)
+# Use the append function to create a latitude vector of the same length as others in pivot_shear since there is no recycling in a tibble
+Latitude <- lat_survey
+for (i in 2:length(z)) {Latitude <- append(Latitude, lat_survey)}
+pivot_shear$Latitude <- Latitude
+# Use the append function to create a longitude vector of the same length as others in pivot_shear since there is no recycling in a tibble
+Longitude <- lon_survey
+for (i in 2:length(z)) {Longitude <- append(Longitude, lon_survey)}
+pivot_shear$Longitude <- Longitude
 
-# Need to figure out how to get Lat and Lon into this tibble.  No recycling with a tibble.
+# Plot the results
+library(viridisLite)
+library(plotly)
+dev.new()
+fig <- plot_ly(pivot_shear, x = ~Longitude, y = ~Latitude, z = ~Depth*-1, color = ~Shear)
+fig <- fig %>% add_markers()
+fig
+
+dev.new()
+scatter3D(pivot_shear$Longitude, pivot_shear$Latitude, -1*pivot_shear$Depth, colvar = pivot_shear$Shear,
+phi = 45, theta = 45, col = viridis(256), pch = 19, cex = 0.75, cex.main = 2,
+cex.axis = 0.75, cex.lab = 0.75, xlab = "Longitude", ylab = "Latitude", zlab = "Depth (m)",
+main = "Shear", ticktype = "detailed")
+
+
 
