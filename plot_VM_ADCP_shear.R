@@ -29,10 +29,15 @@ ADCP_u <- ADCP_uv$uv[,seq(from=1,to=24820,by=2)]
 ADCP_v <- ADCP_uv$uv[,seq(from=2,to=24820,by=2)]
 
 # Find the data that corresponds to the days of the Ross Bank VPR Survey
-#Start_time <- 383.7 # 18 Jan 2012
-#End_time <- 386.0 # 21 Jan 2012
-Start_time <- 383.75 # 18 Jan 2012
-End_time <- 384.8 # 21 Jan 2012
+# Start_time <- 383.75 # 18 Jan 2012
+# End_time <- 384.8 # 21 Jan 2012
+# Find the data that corresponds to the days of the Eddy 3 Survey
+# Start_time <- 382 # 17 Jan 2012
+# End_time <- 383.5 # 18 Jan 2012
+# Find the data that corresponds to the days of the Ice Edge Eddy Survey
+ Start_time <- 395.5 # 31 Jan 2012
+ End_time <- 396.5 # 01 Feb 2012
+ 
 
 # Find the indices in the time vector that match this criteria
 VPR_survey_time <- which(ADCP_xy$xyt[3,]>=Start_time & ADCP_xy$xyt[3,]<=End_time)
@@ -62,7 +67,7 @@ mean_speed <- sqrt(u_mean^2 + v_mean^2)
 mean_direction <- atan2(v_mean,u_mean)
 
 # bin depths for shear - note the the u & v are at zc depths, so the I have assigned
-# the shear to be in the middle of those bin depths, whic corresponds to the z values.
+# the shear to be in the middle of those bin depths, which corresponds to the z values.
 z <- ADCP_xy$z[2:79]
 u_diff <- diff(u_survey)
 v_diff <- diff(v_survey)
@@ -80,7 +85,9 @@ shear_tibble_with_depth <- bind_cols(z,shear_tibble)
 # Add a name to the depth column
 names(shear_tibble_with_depth)[1] <- "Depth"
 # User pivot_longer to create a tibble with a shear value for each depth and time 
-pivot_shear <- pivot_longer(shear_tibble_with_depth, cols = 2:303, names_to = "Time", values_to = "Shear")
+#pivot_shear <- pivot_longer(shear_tibble_with_depth, cols = 2:303, names_to = "Time", values_to = "Shear")
+len_time_survey <- length(time_survey)+1
+pivot_shear <- pivot_longer(shear_tibble_with_depth, cols = 2:len_time_survey, names_to = "Time", values_to = "Shear")
 # Convert time from a string to number 
 pivot_shear$Time <- as.numeric(pivot_shear$Time)
 # Use the append function to create a latitude vector of the same length as others in pivot_shear since there is no recycling in a tibble
@@ -95,10 +102,11 @@ pivot_shear$Longitude <- Longitude
 # Plot the results
 library(viridisLite)
 library(plotly)
-dev.new()
 fig <- plot_ly(pivot_shear, x = ~Longitude, y = ~Latitude, z = ~Depth*-1, color = ~Shear)
 fig <- fig %>% add_markers()
 fig
+# Need to type fig at command prompt to get this to display
+
 
 dev.new()
 scatter3D(pivot_shear$Longitude, pivot_shear$Latitude, -1*pivot_shear$Depth, colvar = pivot_shear$Shear,
@@ -106,5 +114,18 @@ phi = 45, theta = 45, col = viridis(256), pch = 19, cex = 0.75, cex.main = 2,
 cex.axis = 0.75, cex.lab = 0.75, xlab = "Longitude", ylab = "Latitude", zlab = "Depth (m)",
 main = "Shear", ticktype = "detailed")
 
-
-
+# Plot a map of the locations of the VM_ADCP samples 
+dev.new()
+plot(pivot_shear$Longitude, pivot_shear$Latitude)
+# Plot the mean 20-200m currents for context of the shear plots
+# create data frames
+ADCP_df <- data.frame(lon_survey,lat_survey,u_mean,v_mean, mean_speed, mean_direction)
+# plot the data
+# Note that the length of the arrows on the plot can be controlled by dividing the mean_speed below
+ADCP_quiver_plot <- ggplot(ADCP_df, aes(x=lon_survey,y=lat_survey)) +
+  geom_point() + 
+  geom_spoke(angle=mean_direction,radius=mean_speed/3, show.legend = TRUE, na.rm = TRUE, arrow = arrow(length = unit(.05, 'inches'))) +
+  xlab("Longitude") +
+  ylab("Latitude") +
+  ggtitle("VM_ADCP Depth Average 20-200m")
+# Need to type dev.new() and ADCP_quiver_plot at command prompt to get this to display
