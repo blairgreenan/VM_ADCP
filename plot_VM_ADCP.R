@@ -14,7 +14,6 @@ library(lubridate)
 library(cmocean)
 library(interp)
 library(patchwork)
-library(ggquiver)
 
 # load to processed data file
 # https://www.nodc.noaa.gov/archive/arc0039/0082184/1.1/data/0-data/KN201L01/adcp/programs/adcp_doc/UHDAS_scidoc/Processing/adcpsect_output.html
