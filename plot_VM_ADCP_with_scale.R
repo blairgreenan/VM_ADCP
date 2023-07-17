@@ -125,27 +125,31 @@ subtidal_df <- data.frame(lon_survey,lat_survey,subtidal_u,subtidal_v, subtidal_
 ADCP_quiver_plot <- ggplot(ADCP_df, aes(x=lon_survey,y=lat_survey)) +
   geom_point() + 
   geom_spoke(angle=mean_direction,radius=mean_speed/1, show.legend = TRUE, na.rm = TRUE, arrow = arrow(length = unit(.05, 'inches'))) +
-  xlab("Longitude") +
+  xlab("") +
   ylab("Latitude") +
   xlim(177,181) +
   ylim(-77.25, -76.25) +
   ggtitle("VM_ADCP Depth Average 20-200m") +
   coord_fixed(ratio=1) # set axis equal so that scale bar is 1:1 for x & y direction
 # 27 Jun 2023 - adding in a point to provide a scale bar
-ADCP_quiver_plot <- ADCP_quiver_plot + geom_spoke(aes(x=177,y=-77.125),angle=0*pi/180,radius=0.5/1,arrow = arrow(length = unit(.05, 'inches')))
+ADCP_quiver_plot <- ADCP_quiver_plot + 
+  geom_spoke(aes(x=177,y=-77.125),angle=0*pi/180,radius=0.5/1,arrow = arrow(length = unit(.05, 'inches'))) +
+  geom_spoke(aes(x=177,y=-77.125),angle=90*pi/180,radius=0.5/1,arrow = arrow(length = unit(.05, 'inches')))
 
 # Note that the length of the arrows on the plot can be controlled by dividing the mean_speed below
 tide_quiver_plot <- ggplot(tide_df, aes(x=lon_survey,y=lat_survey)) +
   geom_point() + 
   geom_spoke(angle=tide_direction,radius=tide_speed/1, show.legend = TRUE, na.rm = TRUE, arrow = arrow(length = unit(.05, 'inches'))) +
-  xlab("Longitude") +
+  xlab("") +
   ylab("Latitude") +
   xlim(177,181) +
   ylim(-77.25, -76.25) +
   ggtitle("Tidal Model") +
   coord_fixed(ratio=1) # set axis equal so that scale bar is 1:1 for x & y direction
 # 27 Jun 2023 - adding in a point to provide a scale bar
-tide_quiver_plot <- tide_quiver_plot + geom_spoke(aes(x=177,y=-77.125),angle=0*pi/180,radius=0.5/1,arrow = arrow(length = unit(.05, 'inches')))
+tide_quiver_plot <- tide_quiver_plot + 
+  geom_spoke(aes(x=177,y=-77.125),angle=0*pi/180,radius=0.5/1,arrow = arrow(length = unit(.05, 'inches'))) +
+  geom_spoke(aes(x=177,y=-77.125),angle=90*pi/180,radius=0.5/1,arrow = arrow(length = unit(.05, 'inches')))
 
 # Note that the length of the arrows on the plot can be controlled by dividing the mean_speed below
 subtidal_quiver_plot <- ggplot(subtidal_df, aes(x=lon_survey,y=lat_survey)) +
@@ -158,7 +162,9 @@ subtidal_quiver_plot <- ggplot(subtidal_df, aes(x=lon_survey,y=lat_survey)) +
   ggtitle("Subtidal Currents") +
   coord_fixed(ratio=1) # set axis equal so that scale bar is 1:1 for x & y direction
 # 27 Jun 2023 - adding in a point to provide a scale bar
-subtidal_quiver_plot <- subtidal_quiver_plot + geom_spoke(aes(x=177,y=-77.125),angle=0*pi/180,radius=0.5/1,arrow = arrow(length = unit(.05, 'inches')))
+subtidal_quiver_plot <- subtidal_quiver_plot + 
+  geom_spoke(aes(x=177,y=-77.125),angle=0*pi/180,radius=0.5/1,arrow = arrow(length = unit(.05, 'inches'))) +
+  geom_spoke(aes(x=177,y=-77.125),angle=90*pi/180,radius=0.5/1,arrow = arrow(length = unit(.05, 'inches')))
 
 
 
@@ -166,8 +172,8 @@ subtidal_quiver_plot <- subtidal_quiver_plot + geom_spoke(aes(x=177,y=-77.125),a
 # dev.new()
 # Use Patchwork package to create 3-panel plot
 # ADCP_quiver_plot / tide_quiver_plot / subtidal_quiver_plot
-# ggsave("VMADCP_tides_scale_bar.png", device = "png", width = 3.5, height = 3.5, units = "in", dpi = 600, scale = 3)
-# ggsave("VMADCP_tides_scale_bar.pdf", device = "pdf", width = 3.5, height = 3.5, units = "in", dpi = 1200, scale = 3)
+# ggsave("VMADCP_tides_scale_bar.png", device = "png", width = 3.5, height = 3.5, units = "in", dpi = 600, scale = 2)
+# ggsave("VMADCP_tides_scale_bar.pdf", device = "pdf", width = 3.5, height = 3.5, units = "in", dpi = 1200, scale = 2)
 
 # Need to look at the vertical shear estimates from the VM_ADCP
 
