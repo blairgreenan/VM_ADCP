@@ -97,10 +97,15 @@ file.copy("C:/Users/greenanb/OneDrive - DFO-MPO/Documents/MATLAB/toolbox/TMD_Mat
 tidal_model <- readMat("survey_tidal_model.mat")
 tidal_u <- (tidal_model$u.tide[,1:length(tidal_model$u.tide)])/100
 tidal_v <- (tidal_model$v.tide[,1:length(tidal_model$v.tide)])/100
+# adjust v component to account for the different scales on lat/lon
+tidal_v <- 0.2342*tidal_v
 
 # Compute the depth-average ADCP velocity components
 u_mean <- colMeans(u_survey,na.rm=TRUE)
 v_mean <- colMeans(v_survey,na.rm=TRUE)
+# adjust v component to account for the different scales on lat/lon
+v_mean <- 0.2342*v_mean
+
 # Compute the speed and direction
 mean_speed <- sqrt(u_mean^2 + v_mean^2)
 mean_direction <- atan2(v_mean,u_mean)
@@ -125,11 +130,19 @@ subtidal_df <- data.frame(lon_survey,lat_survey,subtidal_u,subtidal_v, subtidal_
 # be 1 which really makes the plots hard to make readable.So, I have removed this
 # constraint and the scale bar.
 
+# set a radius scale factor for the arrows
+radius_scale <- 1
+
 # plot the data
 # Note that the length of the arrows on the plot can be controlled by dividing the mean_speed below
 ADCP_quiver_plot <- ggplot(ADCP_df, aes(x=lon_survey,y=lat_survey)) +
   geom_point() + 
-  geom_spoke(angle=mean_direction,radius=mean_speed/3, show.legend = TRUE, na.rm = TRUE, arrow = arrow(length = unit(.05, 'inches'))) +
+  geom_spoke(angle=mean_direction,radius=mean_speed/radius_scale, show.legend = TRUE, na.rm = TRUE, arrow = arrow(length = unit(.05, 'inches'))) +
+# adding scale bar
+  geom_spoke(aes(x=177,y=-77),angle=0*pi/180,radius=0.5/radius_scale,arrow = arrow(length = unit(.05, 'inches'))) +
+# at Ross Bank, the ratio of distance for 1 deg of longitude (26 km) relative to 1 deg of latitude (111 km) is 0.2342
+# so we need to correct the radius of the scale vector
+  geom_spoke(aes(x=177,y=-77),angle=90*pi/180,radius=(0.5/radius_scale)*0.2342,arrow = arrow(length = unit(.05, 'inches'))) +
   #  xlab("") +
   xlab("Longitude") +
   ylab("Latitude") +
@@ -148,7 +161,7 @@ ADCP_quiver_plot <- ggplot(ADCP_df, aes(x=lon_survey,y=lat_survey)) +
 # Note that the length of the arrows on the plot can be controlled by dividing the mean_speed below
 tide_quiver_plot <- ggplot(tide_df, aes(x=lon_survey,y=lat_survey)) +
   geom_point() + 
-  geom_spoke(angle=tide_direction,radius=tide_speed/3, show.legend = TRUE, na.rm = TRUE, arrow = arrow(length = unit(.05, 'inches'))) +
+  geom_spoke(angle=tide_direction,radius=tide_speed/radius_scale, show.legend = TRUE, na.rm = TRUE, arrow = arrow(length = unit(.05, 'inches'))) +
   #  xlab("") +
   xlab("Longitude") +
   ylab("") +
@@ -168,7 +181,7 @@ tide_quiver_plot <- ggplot(tide_df, aes(x=lon_survey,y=lat_survey)) +
 # Note that the length of the arrows on the plot can be controlled by dividing the mean_speed below
 subtidal_quiver_plot <- ggplot(subtidal_df, aes(x=lon_survey,y=lat_survey)) +
   geom_point() + 
-  geom_spoke(angle=subtidal_direction,radius=subtidal_speed/3, show.legend = TRUE, na.rm = TRUE, arrow = arrow(length = unit(.05, 'inches'))) +
+  geom_spoke(angle=subtidal_direction,radius=subtidal_speed/radius_scale, show.legend = TRUE, na.rm = TRUE, arrow = arrow(length = unit(.05, 'inches'))) +
   xlab("Longitude") +
   ylab("") +
   #  ylab("Latitude") +
@@ -190,8 +203,8 @@ subtidal_quiver_plot <- ggplot(subtidal_df, aes(x=lon_survey,y=lat_survey)) +
 # dev.new()
 # Use Patchwork package to create 3-panel plot
 # ADCP_quiver_plot + tide_quiver_plot + subtidal_quiver_plot
-# ggsave("VMADCP_tides_scale_bar.png", device = "png", width = 3.5, height = 3.5, units = "in", dpi = 600, scale = 2)
-# ggsave("VMADCP_tides_scale_bar.pdf", device = "pdf", width = 3.5, height = 3.5, units = "in", dpi = 1200, scale = 2)
+# ggsave("VMADCP_tides_scale_bar.png", device = "png", width = 6, height = 3, units = "in", dpi = 600, scale = 3)
+# ggsave("VMADCP_tides_scale_bar.pdf", device = "pdf", width = 6, height = 3, units = "in", dpi = 1200, scale = 3)
 
 # Need to look at the vertical shear estimates from the VM_ADCP
 
