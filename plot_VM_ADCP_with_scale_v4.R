@@ -143,7 +143,9 @@ ADCP_quiver_plot <- ggplot(ADCP_df, aes(x=lon_survey,y=lat_survey)) +
 # at Ross Bank, the ratio of distance for 1 deg of longitude (26 km) relative to 1 deg of latitude (111 km) is 0.2342
 # so we need to correct the radius of the scale vector
   geom_spoke(aes(x=177,y=-77),angle=90*pi/180,radius=(0.5/radius_scale)*0.2342,arrow = arrow(length = unit(.05, 'inches'))) +
-  #  xlab("") +
+# add label for scale bar
+  geom_text(x=177.25, y=-77.02, label = "0.5 m/s") +
+    #  xlab("") +
   xlab("Longitude") +
   ylab("Latitude") +
   xlim(177,181) +
